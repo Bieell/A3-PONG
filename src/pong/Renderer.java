@@ -1,4 +1,4 @@
-package pongdossonhos;
+package pong;
 
 import com.jogamp.newt.event.WindowAdapter;
 import com.jogamp.newt.event.WindowEvent;
@@ -34,9 +34,8 @@ public class Renderer {
             }
         }); 
         
-//        window.setFullscreen(true);
+        window.setFullscreen(true);
         window.setSize(800, 600);
-        window.setResizable(false);
         window.setResizable(false);
         int[] positions = getScreenCenterPosition(window);
         window.setPosition(positions[0], positions[1]);
