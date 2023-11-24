@@ -1,4 +1,4 @@
-package pong;
+package com.graphics;
 
 import com.jogamp.opengl.GL;
 import com.jogamp.opengl.GL2;
@@ -6,7 +6,7 @@ import com.jogamp.opengl.GLAutoDrawable;
 import com.jogamp.opengl.GLEventListener;
 import com.jogamp.opengl.util.gl2.GLUT;
 import java.awt.Color;
-import textura.Textura;
+import texture.Textura;
 
 /**
  *

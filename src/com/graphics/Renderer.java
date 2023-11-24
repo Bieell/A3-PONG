@@ -1,4 +1,4 @@
-package pong;
+package com.graphics;
 
 import com.jogamp.newt.event.WindowAdapter;
 import com.jogamp.newt.event.WindowEvent;
