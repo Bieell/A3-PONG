@@ -1,5 +1,6 @@
 package com.graphics;
 
+import com.input.Keyboard;
 import com.jogamp.newt.event.WindowAdapter;
 import com.jogamp.newt.event.WindowEvent;
 import com.jogamp.newt.opengl.GLWindow;
@@ -20,6 +21,7 @@ public class Renderer {
         
         Pong pong = new Pong();
         window.addGLEventListener(pong);
+        window.addKeyListener(new Keyboard(pong));
         
         // animação da janela, fica em loop, executando a todo momento o display;
         FPSAnimator animator = new FPSAnimator(window, 60);
@@ -34,7 +36,7 @@ public class Renderer {
             }
         }); 
         
-        window.setFullscreen(true);
+//        window.setFullscreen(true);
         window.setSize(800, 600);
         window.setResizable(false);
         int[] positions = getScreenCenterPosition(window);

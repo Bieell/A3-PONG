@@ -6,7 +6,7 @@ import com.jogamp.opengl.GLAutoDrawable;
 import com.jogamp.opengl.GLEventListener;
 import com.jogamp.opengl.util.gl2.GLUT;
 import java.awt.Color;
-import texture.Textura;
+import com.texture.Textura;
 
 /**
  *
@@ -15,29 +15,33 @@ import texture.Textura;
 public class Pong implements GLEventListener{
     
     private float xMin, xMax, yMin, yMax, zMin, zMax;
-    private final float MAX_SRU = 100.0f;
-    private final float MIN_SRU = -100.0f;
+    public final float MAX_SRU = 100.0f;
+    public final float MIN_SRU = -100.0f;
     private GL2 gl;
     private GLUT glut;
     private Textura textura;
     private final int totalTextura = 1;
-    private final String background = "imagens/backgroundFHD.jpg";
+    private final String background = "imagens/pong_backgroundFHD.jpg";
     
-    private int filtro = GL2.GL_NEAREST; ////GL_NEAREST ou GL_LINEAR
-    private int wrap = GL2.GL_CLAMP;  //GL.GL_REPEAT ou GL.GL_CLAMP
-    private int modo = GL2.GL_DECAL; ////GL.GL_MODULATE ou GL.GL_DECAL ou GL.GL_BLEND
+    private final int filtro = GL2.GL_NEAREST; ////GL_NEAREST ou GL_LINEAR
+    private final int wrap = GL2.GL_CLAMP;  //GL.GL_REPEAT ou GL.GL_CLAMP
+    private final int modo = GL2.GL_DECAL; ////GL.GL_MODULATE ou GL.GL_DECAL ou GL.GL_BLEND
     
     private final float DISTANCIA_Z_FUNDO = 20.0f;
-    private float raio = 14f;
-    private float numPontos = 60f;
+    private final float raio = 14f;
     private float posicaoXBola = 0.0f;
-    private float posicaoYBola = 0.0f;
-    private float velocidadeDaBola = .2f; 
+    private float posicaoYBola = 60.0f;
+    private float velocidadeXDaBola = 3f; 
+    private float velocidadeYDaBola = 3f; 
+    public final float larguraDaCama = 50f;
+    public final float alturaCama = 15f;
+    public float posXMinCama = -25f;
+    public float posXMaxCama = posXMinCama + larguraDaCama;
+    private final float posYMinCama = -90f;
+    private final float posYMaxCama = posYMinCama + alturaCama;
     
-    private int toning = GL2.GL_SMOOTH;
+    private final int toning = GL2.GL_SMOOTH;
     int i =0;
-    
-    
 
     @Override
     public void init(GLAutoDrawable drawable) {
@@ -46,6 +50,7 @@ public class Pong implements GLEventListener{
         glut = new GLUT();
         gl.glEnable(GL.GL_DEPTH_TEST);
         textura = new Textura(totalTextura);
+        
     }
 
     @Override
@@ -54,12 +59,11 @@ public class Pong implements GLEventListener{
         gl.glClear(GL2.GL_COLOR_BUFFER_BIT | GL2.GL_DEPTH_BUFFER_BIT);
         gl.glLoadIdentity();
         
-        lithingScheme();
-        turnLightOn();
+        configurarIluminacao();
+        ligarLuz();
         desenharFundo();
-        desenhaCama();
         desenhaBola();
-        
+        desenhaCama();
     }
 
     @Override
@@ -105,21 +109,20 @@ public class Pong implements GLEventListener{
     
     private void desenhaCama(){
         gl.glPushMatrix();
-        desenhaQuadrilatero(Color.red, -25, -20, -65, -90, true);
-        desenhaQuadrilatero(Color.red, 20, 25, -75, -90, true);
-        desenhaQuadrilatero(Color.red, -20, 20, -80, -85, true);
-        desenhaQuadrilatero(Color.white, -20, 20, -75, -80, true);
+//        desenhaQuadrilatero(Color.red, posXMinCama, posXMinCama + 5, posYMaxCama + 10, posYMinCama, true);
+//        desenhaQuadrilatero(Color.red, posXMaxCama - 5, posXMaxCama, posYMaxCama, posYMinCama, true);
+        desenhaQuadrilatero(Color.red, posXMinCama, posXMaxCama, posYMaxCama - 5, posYMinCama + 5, true);
+        desenhaQuadrilatero(Color.white, posXMinCama, posXMaxCama, posYMaxCama, posYMinCama + 5, true);
         gl.glPopMatrix();
     }
     
     private void desenhaBola() {
         gl.glPushMatrix();
         moverBola();
-        
         gl.glColor3f(1f, 1f, 1f);
-        glut.glutSolidSphere(14, 50, 50);
+        glut.glutSolidSphere(raio, 50, 50);
         gl.glPopMatrix();
-        
+        desenhaBordaBola();
     }
     
     private void desenhaQuadrilatero(Color color, float x1, float x2, float y1, float y2, boolean borda) {
@@ -145,12 +148,56 @@ public class Pong implements GLEventListener{
     }
     
     private void moverBola() {
-        posicaoXBola = velocidadeDaBola + posicaoXBola;
-        posicaoYBola = velocidadeDaBola + posicaoYBola;
+        posicaoXBola += velocidadeXDaBola;
+        posicaoYBola += velocidadeYDaBola;
         gl.glTranslatef(posicaoXBola, posicaoYBola, DISTANCIA_Z_FUNDO);
+        
+        colisaoComMargens();
+        colisaoComCama();
     }
     
-    public void lithingScheme(){
+    private void colisaoComMargens() {
+        if(posicaoXBola + raio >= MAX_SRU || posicaoXBola - raio <= MIN_SRU) velocidadeXDaBola = -velocidadeXDaBola;
+        if(posicaoYBola + raio >= MAX_SRU) velocidadeYDaBola = -velocidadeYDaBola;        
+        if(posicaoYBola <= MIN_SRU) resetarMovimento();
+    }
+    
+    private void colisaoComCama() {
+        if(posicaoYBola - raio <= posYMaxCama && posicaoYBola - raio >= posYMaxCama - Math.abs(velocidadeYDaBola)) {
+            if(posicaoXBola - (raio/2) <= posXMaxCama && posicaoXBola + (raio/2) >= posXMinCama){
+                velocidadeYDaBola = -velocidadeYDaBola;
+            } else if(posicaoXBola - raio <= posXMaxCama && posicaoXBola + raio >= posXMinCama) {
+                if(velocidadeXDaBola > 0 && posicaoXBola + raio >= posXMaxCama) {
+                    velocidadeYDaBola = -velocidadeYDaBola;
+                } else if(velocidadeXDaBola < 0 && posicaoXBola - raio <= posXMinCama){
+                    velocidadeYDaBola = -velocidadeYDaBola;
+                } else {
+                    velocidadeYDaBola = -velocidadeYDaBola;
+                    velocidadeXDaBola = -velocidadeXDaBola;
+                }
+            }
+        } else if(posicaoYBola - raio < posYMaxCama - Math.abs(velocidadeYDaBola)) {
+            if(posicaoXBola - raio <= posXMaxCama && posicaoXBola - raio >= posXMaxCama - Math.abs(velocidadeYDaBola) && posicaoYBola - (raio/3) >= posYMaxCama){
+                velocidadeYDaBola = -velocidadeYDaBola;
+                velocidadeXDaBola = -velocidadeXDaBola;
+            }else if(posicaoXBola + raio >= posXMinCama && posicaoXBola + raio <= posXMinCama + Math.abs(velocidadeYDaBola) && posicaoYBola - (raio/3) >= posYMaxCama) {
+                velocidadeYDaBola = -velocidadeYDaBola;
+                velocidadeXDaBola = -velocidadeXDaBola;
+            } else if(posicaoXBola - raio <= posXMaxCama && posicaoXBola - raio >= posXMaxCama - Math.abs(velocidadeYDaBola)){
+                velocidadeXDaBola = -velocidadeXDaBola;
+            } else if(posicaoXBola + raio >= posXMinCama && posicaoXBola + raio <= posXMinCama + Math.abs(velocidadeYDaBola)) {
+                velocidadeXDaBola = -velocidadeXDaBola;
+            }
+        }
+    }
+    
+    private void resetarMovimento() {
+        posicaoXBola = 0;
+        posicaoYBola = 60f;
+        velocidadeXDaBola = 3f; 
+        velocidadeYDaBola = 3f; 
+    }
+    public void configurarIluminacao(){
         float[] ambientLight = { 0.7f, 0.7f, 0.7f, 1f };  
         gl.glLightfv(GL2.GL_LIGHT0, GL2.GL_AMBIENT, ambientLight, 0);  
 		
@@ -160,16 +207,15 @@ public class Pong implements GLEventListener{
         float lightPosition[] = {-50.0f, 0.0f, 100.0f, 1.0f};
         gl.glLightfv(GL2.GL_LIGHT0, GL2.GL_POSITION, lightPosition, 0);
     }
-
     
-    public void turnLightOn() {
+    public void ligarLuz() {
         gl.glEnable(GL2.GL_COLOR_MATERIAL);
         gl.glEnable(GL2.GL_LIGHTING);
         gl.glEnable(GL2.GL_LIGHT0);    
         gl.glShadeModel(toning);
     }
 
-    public void turnLightOff() {
+    public void desligarLuz() {
         gl.glDisable(GL2.GL_LIGHT0);
         gl.glDisable(GL2.GL_LIGHTING);
     }
@@ -177,5 +223,21 @@ public class Pong implements GLEventListener{
     
     private float convertColor(int color) {
         return (float) color/255;
+    }
+    
+    private void desenhaBordaBola() {
+        int numSegments = 100;
+        float theta = (float) (2.0 * Math.PI / numSegments);
+        
+        gl.glColor3f(0.0f, 0.0f, 0.0f);
+        gl.glLineWidth(3);// Cor da borda (preto)
+        gl.glBegin(GL2.GL_LINE_LOOP);
+        for (int i = 0; i <= numSegments; i++) {
+            float x = posicaoXBola + (float) (raio * Math.cos(i * theta));
+            float y = posicaoYBola + (float) (raio * Math.sin(i * theta));
+            gl.glVertex3f(x, y, DISTANCIA_Z_FUNDO);
+        }
+        gl.glEnd();
+        
     }
 }
