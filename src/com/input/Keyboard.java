@@ -15,17 +15,16 @@ public class Keyboard implements KeyListener{
     public void keyPressed(KeyEvent e) {
         switch (e.getKeyCode()) {
             case KeyEvent.VK_LEFT:
-                if(pong.posXMinCama > pong.MIN_SRU) {
-                    pong.posXMaxCama-= 5;
-                    pong.posXMinCama-= 5;
+                if(pong.posXMinCama > pong.xMin) {
+                    pong.posXMinCama -= 10;
+                    pong.posXMaxCama -= 10;
                     
                 }
                 break;
             case KeyEvent.VK_RIGHT:
-                if(pong.posXMaxCama < pong.MAX_SRU) {
-                    pong.posXMaxCama+= 5;
-                    pong.posXMinCama+= 5;
-                    
+                if(pong.posXMaxCama < pong.xMax) {
+                    pong.posXMinCama += 10;
+                    pong.posXMaxCama +=10;
                 }
                 break;
                 

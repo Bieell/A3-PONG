@@ -14,43 +14,52 @@ import com.texture.Textura;
  */
 public class Pong implements GLEventListener{
     
-    private float xMin, xMax, yMin, yMax, zMin, zMax;
+    public float xMin, xMax, yMin, yMax, zMin, zMax;
+    private float aspect;
+    private float screenWidth;
+    private float screenHeight;
     public final float MAX_SRU = 100.0f;
     public final float MIN_SRU = -100.0f;
     private GL2 gl;
     private GLUT glut;
     private Textura textura;
     private final int totalTextura = 1;
-    private final String background = "imagens/pong_backgroundFHD.jpg";
+    private final String background = "imagens/backgroundHD.jpg";
     
     private final int filtro = GL2.GL_NEAREST; ////GL_NEAREST ou GL_LINEAR
     private final int wrap = GL2.GL_CLAMP;  //GL.GL_REPEAT ou GL.GL_CLAMP
     private final int modo = GL2.GL_DECAL; ////GL.GL_MODULATE ou GL.GL_DECAL ou GL.GL_BLEND
     
     private final float DISTANCIA_Z_FUNDO = 20.0f;
-    private final float raio = 14f;
-    private float posicaoXBola = 0.0f;
-    private float posicaoYBola = 60.0f;
-    private float velocidadeXDaBola = 3f; 
-    private float velocidadeYDaBola = 3f; 
-    public final float larguraDaCama = 50f;
-    public final float alturaCama = 15f;
+    private final float raio = 16f;
+    private final float posXBolaInit = -40.0f;
+    private final float posYBolaInit = 80.0f;
+    private final float velocidadeInicial = 3f;
+    private float posicaoXBola;
+    private float posicaoYBola;
+    private float velocidadeXDaBola; 
+    private float velocidadeYDaBola; 
+    public final float larguraDaCama = 65f;
+    public final float alturaCama = 14f;
     public float posXMinCama = -25f;
-    public float posXMaxCama = posXMinCama + larguraDaCama;
     private final float posYMinCama = -90f;
+    public float posXMaxCama = posXMinCama + larguraDaCama;
     private final float posYMaxCama = posYMinCama + alturaCama;
+    private final float diferencaAlturaCama = (Math.abs(posYMinCama) - Math.abs(posYMaxCama))/2;
     
     private final int toning = GL2.GL_SMOOTH;
     int i =0;
 
     @Override
     public void init(GLAutoDrawable drawable) {
-        definirLimiteSRU();
+        posicaoXBola = posXBolaInit;
+        posicaoYBola = posYBolaInit;
+        velocidadeXDaBola = velocidadeInicial;
+        velocidadeYDaBola = velocidadeInicial;
         gl = drawable.getGL().getGL2();
         glut = new GLUT();
         gl.glEnable(GL.GL_DEPTH_TEST);
         textura = new Textura(totalTextura);
-        
     }
 
     @Override
@@ -68,10 +77,20 @@ public class Pong implements GLEventListener{
 
     @Override
     public void reshape(GLAutoDrawable drawable, int x, int y, int width, int height) {
-        gl.glMatrixMode(GL2.GL_PROJECTION);
+        if(height == 0) height = 1;
+        screenWidth = width;
+        screenHeight = height;
+        aspect = (float) width / height;
+        
+        definirLimiteSRU();
+        
+        gl.glViewport(0, 0, width, height);
+        gl.glMatrixMode(GL2.GL_PROJECTION);      
         gl.glLoadIdentity(); //lê a matriz identidade
         gl.glOrtho(xMin, xMax, yMin, yMax, zMin, zMax);
+        
         gl.glMatrixMode(GL2.GL_MODELVIEW);
+        gl.glLoadIdentity();
     }
     
     @Override
@@ -79,8 +98,17 @@ public class Pong implements GLEventListener{
     }
     
     private void definirLimiteSRU() {
-        xMax = yMax = zMax = MAX_SRU;
-        xMin = yMin = zMin = MIN_SRU;
+        if(screenWidth >= screenHeight)  {
+            xMin = MIN_SRU * aspect;
+            xMax = MAX_SRU * aspect;
+            yMin = zMin = MIN_SRU;
+            yMax = zMax = MAX_SRU;
+        } else {
+            yMax = MAX_SRU/aspect;
+            yMin = MIN_SRU/aspect;
+            xMax = zMax = MAX_SRU;
+            xMin = zMin = MIN_SRU;
+        }
     }
     
     private void desenharFundo() {
@@ -97,10 +125,10 @@ public class Pong implements GLEventListener{
         
         gl.glPushMatrix();
         gl.glBegin(GL2.GL_QUADS);   
-        gl.glTexCoord2f(0, 0); gl.glVertex2f(-100, -100);
-        gl.glTexCoord2f(1, 0); gl.glVertex2f(100, -100);   
-        gl.glTexCoord2f(1, 1); gl.glVertex2f(100, 100);   
-        gl.glTexCoord2f(0, 1); gl.glVertex2f(-100, 100);
+        gl.glTexCoord2f(0, 0); gl.glVertex2f(xMin, yMin);
+        gl.glTexCoord2f(1, 0); gl.glVertex2f(xMax, yMin);   
+        gl.glTexCoord2f(1, 1); gl.glVertex2f(xMax, yMax);   
+        gl.glTexCoord2f(0, 1); gl.glVertex2f(xMin, yMax);
         gl.glEnd();
         gl.glPopMatrix();
         
@@ -111,8 +139,8 @@ public class Pong implements GLEventListener{
         gl.glPushMatrix();
 //        desenhaQuadrilatero(Color.red, posXMinCama, posXMinCama + 5, posYMaxCama + 10, posYMinCama, true);
 //        desenhaQuadrilatero(Color.red, posXMaxCama - 5, posXMaxCama, posYMaxCama, posYMinCama, true);
-        desenhaQuadrilatero(Color.red, posXMinCama, posXMaxCama, posYMaxCama - 5, posYMinCama + 5, true);
-        desenhaQuadrilatero(Color.white, posXMinCama, posXMaxCama, posYMaxCama, posYMinCama + 5, true);
+        desenhaQuadrilatero(Color.red, posXMinCama, posXMaxCama, posYMaxCama - diferencaAlturaCama, posYMinCama, true);
+        desenhaQuadrilatero(Color.white, posXMinCama, posXMaxCama, posYMaxCama, posYMinCama + diferencaAlturaCama , true);
         gl.glPopMatrix();
     }
     
@@ -157,9 +185,17 @@ public class Pong implements GLEventListener{
     }
     
     private void colisaoComMargens() {
-        if(posicaoXBola + raio >= MAX_SRU || posicaoXBola - raio <= MIN_SRU) velocidadeXDaBola = -velocidadeXDaBola;
-        if(posicaoYBola + raio >= MAX_SRU) velocidadeYDaBola = -velocidadeYDaBola;        
-        if(posicaoYBola <= MIN_SRU) resetarMovimento();
+        if(posicaoXBola + raio >= xMax || posicaoXBola - raio <= xMin){
+            if(Math.abs(posicaoXBola - raio) - Math.abs(xMin) > Math.abs(velocidadeXDaBola)) {
+                posicaoXBola += Math.abs(posicaoXBola - raio) - Math.abs(xMin);
+            }
+            if(posicaoXBola + raio - xMax > Math.abs(velocidadeXDaBola)) {
+                posicaoXBola -= (posicaoXBola + raio - xMax);
+            }
+            velocidadeXDaBola = -velocidadeXDaBola;
+        }
+        if(posicaoYBola + raio >= yMax) velocidadeYDaBola = -velocidadeYDaBola;        
+        if(posicaoYBola <= yMin) resetarMovimento();
     }
     
     private void colisaoComCama() {
@@ -192,10 +228,10 @@ public class Pong implements GLEventListener{
     }
     
     private void resetarMovimento() {
-        posicaoXBola = 0;
-        posicaoYBola = 60f;
-        velocidadeXDaBola = 3f; 
-        velocidadeYDaBola = 3f; 
+        posicaoXBola = posXBolaInit;
+        posicaoYBola = posYBolaInit;
+        velocidadeXDaBola = velocidadeInicial;
+        velocidadeYDaBola = velocidadeInicial;
     }
     public void configurarIluminacao(){
         float[] ambientLight = { 0.7f, 0.7f, 0.7f, 1f };  
