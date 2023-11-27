@@ -48,7 +48,6 @@ public class Pong implements GLEventListener{
     private final float diferencaAlturaCama = (Math.abs(posYMinCama) - Math.abs(posYMaxCama))/2;
     
     private final int toning = GL2.GL_SMOOTH;
-    int i =0;
 
     @Override
     public void init(GLAutoDrawable drawable) {
@@ -64,7 +63,6 @@ public class Pong implements GLEventListener{
 
     @Override
     public void display(GLAutoDrawable drawable) {
-        System.out.println(i++);
         gl.glClear(GL2.GL_COLOR_BUFFER_BIT | GL2.GL_DEPTH_BUFFER_BIT);
         gl.glLoadIdentity();
         
@@ -137,8 +135,8 @@ public class Pong implements GLEventListener{
     
     private void desenhaCama(){
         gl.glPushMatrix();
-//        desenhaQuadrilatero(Color.red, posXMinCama, posXMinCama + 5, posYMaxCama + 10, posYMinCama, true);
-//        desenhaQuadrilatero(Color.red, posXMaxCama - 5, posXMaxCama, posYMaxCama, posYMinCama, true);
+        desenhaQuadrilatero(Color.red, posXMinCama, posXMinCama + 5, posYMaxCama + 10, posYMinCama, true);
+        desenhaQuadrilatero(Color.red, posXMaxCama - 5, posXMaxCama, posYMaxCama, posYMinCama, true);
         desenhaQuadrilatero(Color.red, posXMinCama, posXMaxCama, posYMaxCama - diferencaAlturaCama, posYMinCama, true);
         desenhaQuadrilatero(Color.white, posXMinCama, posXMaxCama, posYMaxCama, posYMinCama + diferencaAlturaCama , true);
         gl.glPopMatrix();
@@ -147,7 +145,7 @@ public class Pong implements GLEventListener{
     private void desenhaBola() {
         gl.glPushMatrix();
         moverBola();
-        gl.glColor3f(1f, 1f, 1f);
+        gl.glColor3f(1f, 0.1f, 0.1f);
         glut.glutSolidSphere(raio, 50, 50);
         gl.glPopMatrix();
         desenhaBordaBola();
@@ -266,7 +264,7 @@ public class Pong implements GLEventListener{
         float theta = (float) (2.0 * Math.PI / numSegments);
         
         gl.glColor3f(0.0f, 0.0f, 0.0f);
-        gl.glLineWidth(3);// Cor da borda (preto)
+        gl.glLineWidth(3);
         gl.glBegin(GL2.GL_LINE_LOOP);
         for (int i = 0; i <= numSegments; i++) {
             float x = posicaoXBola + (float) (raio * Math.cos(i * theta));
