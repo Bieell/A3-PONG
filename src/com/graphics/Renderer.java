@@ -11,6 +11,7 @@ import java.awt.Dimension;
 import java.awt.Toolkit;
 
 public class Renderer {
+    public static FPSAnimator animator;
     public static void main(String[] args) {
         // configurações do opengl (versão do opengl, e suas capacidades)
         GLProfile.initSingleton(); // inicialização do opengl;
@@ -24,7 +25,7 @@ public class Renderer {
         window.addKeyListener(new Keyboard(pong));
         
         // animação da janela, fica em loop, executando a todo momento o display;
-        FPSAnimator animator = new FPSAnimator(window, 60);
+        animator = new FPSAnimator(window, 60);
         animator.start(); 
         
         //encerrar a aplicacao adequadamente
@@ -36,7 +37,7 @@ public class Renderer {
             }
         }); 
         
-//        window.setFullscreen(true);
+        window.setFullscreen(true);
         window.setSize(800, 600);
         window.setResizable(false);
         int[] positions = getScreenCenterPosition(window);

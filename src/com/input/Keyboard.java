@@ -7,6 +7,7 @@ import com.jogamp.newt.event.KeyListener;
 public class Keyboard implements KeyListener{
     
     private final Pong pong;
+    private final float DISTANCIA_DE_MOVIMENTO = 10;
     public Keyboard(Pong pong) {
         this.pong = pong;
     }
@@ -15,16 +16,15 @@ public class Keyboard implements KeyListener{
     public void keyPressed(KeyEvent e) {
         switch (e.getKeyCode()) {
             case KeyEvent.VK_LEFT:
-                if(pong.posXMinCama > pong.xMin) {
-                    pong.posXMinCama -= 10;
-                    pong.posXMaxCama -= 10;
-                    
+                if(pong.posXMinCama > pong.xMin && Math.abs(pong.xMin) - Math.abs(pong.posXMinCama) > DISTANCIA_DE_MOVIMENTO) {
+                    pong.posXMinCama -= DISTANCIA_DE_MOVIMENTO;
+                    pong.posXMaxCama -= DISTANCIA_DE_MOVIMENTO;
                 }
                 break;
             case KeyEvent.VK_RIGHT:
-                if(pong.posXMaxCama < pong.xMax) {
-                    pong.posXMinCama += 10;
-                    pong.posXMaxCama +=10;
+                if(pong.posXMaxCama < pong.xMax && pong.xMax - pong.posXMaxCama > DISTANCIA_DE_MOVIMENTO) {
+                    pong.posXMinCama += DISTANCIA_DE_MOVIMENTO;
+                    pong.posXMaxCama += DISTANCIA_DE_MOVIMENTO;
                 }
                 break;
                 
