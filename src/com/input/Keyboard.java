@@ -48,10 +48,12 @@ public class Keyboard implements KeyListener{
                     System.exit(0);
                 }
                 break;
-            case KeyEvent.VK_ENTER:
+            case KeyEvent.VK_R:
                 pong.zerarPontos();
                 pong.resetarVidas();
+                pong.resetarVelocidade();
                 pong.resetarMovimento();
+                pong.resetarCama();
                 break;
             case KeyEvent.VK_ESCAPE:
                 System.out.println("ESC: " + e.getKeyCode());
@@ -63,6 +65,10 @@ public class Keyboard implements KeyListener{
                     currentPressedKey.remove(currentPressedKey.indexOf(KeyEvent.VK_ESCAPE));
                 }
                 break;
+            case KeyEvent.VK_ENTER:
+                if(pong.exibirMenu) {
+                    pong.exibirMenu = false;
+                }
         }
     }
 

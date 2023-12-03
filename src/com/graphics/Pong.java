@@ -62,6 +62,7 @@ public class Pong implements GLEventListener{
     private final float posicaoYMinCraftTable = yTranslateCraftTable - (larguraCraftTable/2);
     
     private boolean pausarJogo;
+    public boolean exibirMenu;
 
     private final int vidasIniciais = 5;
     private int vidas;
@@ -69,6 +70,23 @@ public class Pong implements GLEventListener{
     
     private final int toning = GL2.GL_SMOOTH;
     private float framesSegundaFase = 0;
+    
+    private final String[] MENSAGENS_MENU = {"Bem vindo ao Pong Minecraft",
+                                             "O objetivo do jogo é rebater a bola o máximo de vezes possível",
+                                             "====================================================",
+                                             "ATALHOS: ",
+                                             "Mover a cama: Setas - [<=] [=>]",
+                                             "Pausar Jogo: [ESC]",
+                                             "Reiniciar Jogo: [R]",
+                                             "Fechar Jogo: [ALT] + [F4]",
+                                             "====================================================",
+                                             "REGRAS: ",
+                                             "- A cada rebatida da bola são acumulados 40 pontos",
+                                             "- Com 200 pontos, a segunda fase é iniciada",
+                                             "- O jogo é encerrado ao zerar as vidas ou quando fechado",
+                                             "PRESSIONE [ENTER] PARA INICIAR O JOGO..."};
+                                             
+                                             
 
     @Override
     public void init(GLAutoDrawable drawable) {
@@ -87,6 +105,7 @@ public class Pong implements GLEventListener{
         vidas = vidasIniciais;
         pontos = 0;
         pausarJogo = false;
+        exibirMenu = true;
         
     }
 
@@ -96,20 +115,19 @@ public class Pong implements GLEventListener{
         gl.glLoadIdentity();
         
         if(vidas > 0) {
-            renderizarJogo();
-            if(pausarJogo) {
-                String mensagem = "JOGO PAUSADO!";
-                int yPosMsg = (int) (screenHeight/2);
-                int xPosMsg = (int) (screenWidth/2.5);
-                desenhaTexto(xPosMsg,yPosMsg , Color.white, mensagem);
-            } 
+            
+            if(pausarJogo || exibirMenu) {
+                exibirInstrucoes();
+            } else {
+                renderizarJogo();
+            }
             
         } else {
             String mensagem = "VOCÊ PERDEU!";
             int yPosMsg = (int) (screenHeight/2);
             int xPosMsg = (int) (screenWidth/2.5);
             desenhaTexto(xPosMsg,yPosMsg , Color.white, mensagem);
-            mensagem = "CLIQUE ENTER PARA JOGAR NOVAMENTE.";
+            mensagem = "PRESSIONE [R] PARA JOGAR NOVAMENTE.";
             yPosMsg = (int) (screenHeight/2.5);
             xPosMsg = (int) (screenWidth/4);
             desenhaTexto(xPosMsg,yPosMsg , Color.white, mensagem);
@@ -158,7 +176,7 @@ public class Pong implements GLEventListener{
             configurarIluminacao();
             ligarLuz();
             desenharFundo();
-            if(!pausarJogo) desenhaBola();
+            desenhaBola();
             desenhaCama();
             desenharVidas();
             String mensagem = "PONTOS: " + pontos;
@@ -262,29 +280,29 @@ public class Pong implements GLEventListener{
         if(posicaoYBola - raio <= posYMaxCama && posicaoYBola - raio >= posYMaxCama - Math.abs(velocidadeYDaBola)) {
             if(posicaoXBola - (raio/2) <= posXMaxCama && posicaoXBola + (raio/2) >= posXMinCama){
                 velocidadeYDaBola = -velocidadeYDaBola;
-                pontos += 100;
+                pontos += 40;
             } else if(posicaoXBola - raio <= posXMaxCama && posicaoXBola + raio >= posXMinCama) {
                 if(velocidadeXDaBola > 0 && posicaoXBola + raio >= posXMaxCama) {
                     velocidadeYDaBola = -velocidadeYDaBola;
-                    pontos += 100;
+                    pontos += 40;
                 } else if(velocidadeXDaBola < 0 && posicaoXBola - raio <= posXMinCama){
                     velocidadeYDaBola = -velocidadeYDaBola;
-                    pontos += 100;
+                    pontos += 40;
                 } else {
                     velocidadeYDaBola = -velocidadeYDaBola;
                     velocidadeXDaBola = -velocidadeXDaBola;
-                    pontos += 100;
+                    pontos += 40;
                 }
             }
         } else if(posicaoYBola - raio < posYMaxCama - Math.abs(velocidadeYDaBola)) {
             if(posicaoXBola - raio <= posXMaxCama && posicaoXBola - raio >= posXMaxCama - Math.abs(velocidadeYDaBola) && posicaoYBola - (raio/3) >= posYMaxCama){
                 velocidadeYDaBola = -velocidadeYDaBola;
                 velocidadeXDaBola = -velocidadeXDaBola;
-                pontos += 100;
+                pontos += 40;
             }else if(posicaoXBola + raio >= posXMinCama && posicaoXBola + raio <= posXMinCama + Math.abs(velocidadeYDaBola) && posicaoYBola - (raio/3) >= posYMaxCama) {
                 velocidadeYDaBola = -velocidadeYDaBola;
                 velocidadeXDaBola = -velocidadeXDaBola;
-                pontos += 100;
+                pontos += 40;
             } else if(posicaoXBola - raio <= posXMaxCama && posicaoXBola - raio >= posXMaxCama - Math.abs(velocidadeYDaBola)){
                 velocidadeXDaBola = -velocidadeXDaBola;
             } else if(posicaoXBola + raio >= posXMinCama && posicaoXBola + raio <= posXMinCama + Math.abs(velocidadeYDaBola)) {
@@ -328,7 +346,7 @@ public class Pong implements GLEventListener{
         float difuseLight[] = {0.8f, 0.8f, 0.8f, 1.0f};
         gl.glLightfv(GL2.GL_LIGHT0, GL2.GL_DIFFUSE, difuseLight, 0);
         
-        float lightPosition[] = {100.0f, 80.0f, DISTANCIA_Z_FUNDO, 1.0f};
+        float lightPosition[] = {-50.0f, 0.0f, 100.0f, 1.0f};
         gl.glLightfv(GL2.GL_LIGHT0, GL2.GL_POSITION, lightPosition, 0);
     }
     
@@ -354,9 +372,7 @@ public class Pong implements GLEventListener{
     }
     
     public void segundaFase(){        
-        if(framesSegundaFase == 1) {
-            alterarVelocidade();
-        }
+        alterarVelocidade();
         textura.gerarTextura(gl, texturaCraft, 2);
         desenharCraftTable();
         colisaoComCraftTable();
@@ -464,6 +480,21 @@ public class Pong implements GLEventListener{
         
     }
     
+    public void exibirInstrucoes() {
+        desenharFundo();
+        
+        int xPosMsgPausa = 0;
+        int yPosMsgPausa = (int) (screenWidth/2);
+        
+        for (String mensagem : MENSAGENS_MENU) {
+            xPosMsgPausa = (int)(screenWidth/5) - mensagem.length();
+            yPosMsgPausa = (int) (yPosMsgPausa - (screenWidth*0.03));
+            desenhaTexto(xPosMsgPausa,yPosMsgPausa , Color.white, mensagem);
+        }
+        
+        
+    }
+    
     public void resetarVidas() {
         vidas = vidasIniciais;
     }
@@ -477,5 +508,14 @@ public class Pong implements GLEventListener{
     }
     public void despausarJogo() {
         pausarJogo = false;
+    }
+    
+    public void resetarVelocidade() {
+        velocidadeInicial = 1.0f;
+    }
+    
+    public void resetarCama() {
+        posXMinCama = -25;
+        posXMaxCama = posXMinCama + larguraDaCama;
     }
 }
