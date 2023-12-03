@@ -5,7 +5,6 @@ import com.jogamp.opengl.GL2;
 import com.jogamp.opengl.GLAutoDrawable;
 import com.jogamp.opengl.GLEventListener;
 import com.jogamp.opengl.glu.GLU;
-import com.jogamp.opengl.glu.GLUquadric;
 import com.jogamp.opengl.util.awt.TextRenderer;
 import com.jogamp.opengl.util.gl2.GLUT;
 import java.awt.Color;
@@ -40,8 +39,8 @@ public class Pong implements GLEventListener{
     
     private final float DISTANCIA_Z_FUNDO = 20.0f;
     private final float raio = 16f;
-    private float posXBolaInit = 0.0f;
-    private final float posYBolaInit = -20.0f;
+    private float posXBolaInit = -60.0f;
+    private final float posYBolaInit = 60.0f;
     private float velocidadeInicial = 1f;
     private float posicaoXBola;
     private float posicaoYBola;
@@ -106,7 +105,7 @@ public class Pong implements GLEventListener{
             } 
             
         } else {
-            String mensagem = "JOGO PERDIDO!";
+            String mensagem = "VOCÊ PERDEU!";
             int yPosMsg = (int) (screenHeight/2);
             int xPosMsg = (int) (screenWidth/2.5);
             desenhaTexto(xPosMsg,yPosMsg , Color.white, mensagem);
@@ -115,8 +114,7 @@ public class Pong implements GLEventListener{
             xPosMsg = (int) (screenWidth/4);
             desenhaTexto(xPosMsg,yPosMsg , Color.white, mensagem);
         }
-//        segundaFase();
-//        System.out.println(drawable.getAnimator().getLastFPS());
+        System.out.println(drawable.getAnimator().getLastFPS());
     }
     @Override
     public void reshape(GLAutoDrawable drawable, int x, int y, int width, int height) {
@@ -356,9 +354,9 @@ public class Pong implements GLEventListener{
     }
     
     public void segundaFase(){        
-//        if(framesSegundaFase == 1) {
-//            alterarVelocidade();
-//        }
+        if(framesSegundaFase == 1) {
+            alterarVelocidade();
+        }
         textura.gerarTextura(gl, texturaCraft, 2);
         desenharCraftTable();
         colisaoComCraftTable();
@@ -370,7 +368,7 @@ public class Pong implements GLEventListener{
     }
     
     private void alterarVelocidade() {
-        velocidadeInicial = 3f;
+        velocidadeInicial = 1.5f;
         velocidadeXDaBola = velocidadeXDaBola < 0 ? -velocidadeInicial : velocidadeInicial;
         velocidadeYDaBola = velocidadeYDaBola < 0 ? -velocidadeInicial : velocidadeInicial;
     }
@@ -445,24 +443,25 @@ public class Pong implements GLEventListener{
     }
     
     private void colisaoComCraftTable() {
-        if(posicaoYBola + (raio/3) >= posicaoYMinCraftTable && posicaoYBola - (raio/3) <= posicaoYMaxCraftTable) {
-            if(posicaoXBola + raio >= posicaoXMinCraftTable && posicaoXBola + raio <= posicaoXMinCraftTable + velocidadeInicial) {
-                velocidadeXDaBola = -velocidadeXDaBola;
-            } else if (posicaoXBola - raio <= posicaoXMaxCraftTable && posicaoXBola - raio >= posicaoXMaxCraftTable - velocidadeInicial) {
-                velocidadeXDaBola = -velocidadeXDaBola;
-            }
-        } else if(posicaoXBola + (raio/3) >= posicaoXMinCraftTable && posicaoXBola - (raio/3) <= posicaoXMaxCraftTable) {
+        if(posicaoXBola + raio >= posicaoXMinCraftTable && posicaoXBola - raio <= posicaoXMaxCraftTable) {
             if(posicaoYBola - raio <= posicaoYMaxCraftTable && posicaoYBola - raio >= posicaoYMaxCraftTable - velocidadeInicial) {
                 velocidadeYDaBola = -velocidadeYDaBola;
             } else if(posicaoYBola + raio >= posicaoYMinCraftTable && posicaoYBola + raio <= posicaoYMinCraftTable + velocidadeInicial) {
                 velocidadeYDaBola = -velocidadeYDaBola;
             }
-        } else if(posicaoYBola - (raio/2) <= posicaoYMaxCraftTable && posicaoYBola - (raio/2) >= posicaoYMaxCraftTable - velocidadeInicial) {
+        } if(posicaoYBola + raio >= posicaoYMinCraftTable && posicaoYBola - raio <= posicaoYMaxCraftTable) {
             if(posicaoXBola + raio >= posicaoXMinCraftTable && posicaoXBola + raio <= posicaoXMinCraftTable + velocidadeInicial) {
-                velocidadeYDaBola = -velocidadeYDaBola;
-                velocidadeXDaBola = -velocidadeXDaBola;
+                if(velocidadeXDaBola > 0) {
+                    velocidadeXDaBola = -velocidadeXDaBola;
+                }
+            } else if (posicaoXBola - raio <= posicaoXMaxCraftTable && posicaoXBola - raio >= posicaoXMaxCraftTable - velocidadeInicial) {
+                if(velocidadeXDaBola < 0) {
+                    velocidadeXDaBola = -velocidadeXDaBola;
+                    
+                }
             }
-        }
+        } 
+        
     }
     
     public void resetarVidas() {
