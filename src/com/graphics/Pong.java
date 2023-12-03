@@ -75,7 +75,7 @@ public class Pong implements GLEventListener{
                                              "O objetivo do jogo é rebater a bola o máximo de vezes possível",
                                              "====================================================",
                                              "ATALHOS: ",
-                                             "Mover a cama: Setas - [<=] [=>]",
+                                             "Mover a cama: Setas - [<=] [=>] e Mouse [M1]",
                                              "Pausar Jogo: [ESC]",
                                              "Reiniciar Jogo: [R]",
                                              "Fechar Jogo: [ALT] + [F4]",
