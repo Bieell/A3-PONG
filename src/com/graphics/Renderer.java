@@ -1,6 +1,7 @@
 package com.graphics;
 
 import com.input.Keyboard;
+import com.input.Mouse;
 import com.jogamp.newt.event.WindowAdapter;
 import com.jogamp.newt.event.WindowEvent;
 import com.jogamp.newt.opengl.GLWindow;
@@ -23,9 +24,10 @@ public class Renderer {
         Pong pong = new Pong();
         window.addGLEventListener(pong);
         window.addKeyListener(new Keyboard(pong));
+        window.addMouseListener(new Mouse(pong));
         
         // animação da janela, fica em loop, executando a todo momento o display;
-        animator = new FPSAnimator(window, 60);
+        animator = new FPSAnimator(window, 30);
         animator.start(); 
         
         //encerrar a aplicacao adequadamente

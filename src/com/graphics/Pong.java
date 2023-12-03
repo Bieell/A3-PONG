@@ -41,7 +41,7 @@ public class Pong implements GLEventListener{
     private final float raio = 16f;
     private float posXBolaInit = -60.0f;
     private final float posYBolaInit = 60.0f;
-    private float velocidadeInicial = 1f;
+    private float velocidadeInicial = 2f;
     private float posicaoXBola;
     private float posicaoYBola;
     private float velocidadeXDaBola; 
@@ -132,7 +132,7 @@ public class Pong implements GLEventListener{
             xPosMsg = (int) (screenWidth/4);
             desenhaTexto(xPosMsg,yPosMsg , Color.white, mensagem);
         }
-        System.out.println(drawable.getAnimator().getLastFPS());
+//        System.out.println(drawable.getAnimator().getLastFPS());
     }
     @Override
     public void reshape(GLAutoDrawable drawable, int x, int y, int width, int height) {
@@ -384,7 +384,7 @@ public class Pong implements GLEventListener{
     }
     
     private void alterarVelocidade() {
-        velocidadeInicial = 1.5f;
+        velocidadeInicial = 3f;
         velocidadeXDaBola = velocidadeXDaBola < 0 ? -velocidadeInicial : velocidadeInicial;
         velocidadeYDaBola = velocidadeYDaBola < 0 ? -velocidadeInicial : velocidadeInicial;
     }
