@@ -4,6 +4,8 @@ import com.jogamp.opengl.GL;
 import com.jogamp.opengl.GL2;
 import com.jogamp.opengl.GLAutoDrawable;
 import com.jogamp.opengl.GLEventListener;
+import com.jogamp.opengl.glu.GLU;
+import com.jogamp.opengl.glu.GLUquadric;
 import com.jogamp.opengl.util.awt.TextRenderer;
 import com.jogamp.opengl.util.gl2.GLUT;
 import java.awt.Color;
@@ -25,8 +27,11 @@ public class Pong implements GLEventListener{
     private GL2 gl;
     private GLUT glut;
     private Textura textura;
-    private final int totalTextura = 1;
-    private String background = "imagens/backgroundHD.jpg";
+    private final int totalTextura = 3;
+    private final String background = "imagens/background.jpg";
+    private final String texturaCraft = "imagens/craft_table.jpg";
+    private final String texturaVida = "imagens/vida.png";
+    private GLU glu;
     
     private final int filtro = GL2.GL_NEAREST; ////GL_NEAREST ou GL_LINEAR
     private final int wrap = GL2.GL_CLAMP;  //GL.GL_REPEAT ou GL.GL_CLAMP
@@ -35,9 +40,9 @@ public class Pong implements GLEventListener{
     
     private final float DISTANCIA_Z_FUNDO = 20.0f;
     private final float raio = 16f;
-    private final float posXBolaInit = -40.0f;
-    private final float posYBolaInit = 80.0f;
-    private float velocidadeInicial = 2f;
+    private float posXBolaInit = 0.0f;
+    private final float posYBolaInit = -20.0f;
+    private float velocidadeInicial = 1f;
     private float posicaoXBola;
     private float posicaoYBola;
     private float velocidadeXDaBola; 
@@ -50,23 +55,40 @@ public class Pong implements GLEventListener{
     private final float posYMaxCama = posYMinCama + alturaCama;
     private final float diferencaAlturaCama = (Math.abs(posYMinCama) - Math.abs(posYMaxCama))/2;
     
-    private int vidas = 5;
-    private int pontos = 0;
+    private final float larguraCraftTable = 40;
+    private final float posicaoXMaxCraftTable = larguraCraftTable/2;
+    private final float posicaoXMinCraftTable = (larguraCraftTable/2)*-1;
+    private final float yTranslateCraftTable = 20f;
+    private final float posicaoYMaxCraftTable = yTranslateCraftTable + (larguraCraftTable/2);
+    private final float posicaoYMinCraftTable = yTranslateCraftTable - (larguraCraftTable/2);
+    
+    private boolean pausarJogo;
+
+    private final int vidasIniciais = 5;
+    private int vidas;
+    private int pontos ;
     
     private final int toning = GL2.GL_SMOOTH;
     private float framesSegundaFase = 0;
 
     @Override
     public void init(GLAutoDrawable drawable) {
-        posicaoXBola = posXBolaInit;
-        posicaoYBola = posYBolaInit;
         velocidadeXDaBola = velocidadeInicial;
         velocidadeYDaBola = velocidadeInicial;
+        posicaoYBola = posYBolaInit;
         gl = drawable.getGL().getGL2();
         glut = new GLUT();
+        glu = new GLU();
         gl.glEnable(GL.GL_DEPTH_TEST);
+        gl.glEnable(GL2.GL_BLEND);
+        gl.glBlendFunc(GL2.GL_SRC_ALPHA, GL2.GL_ONE_MINUS_SRC_ALPHA);
         textura = new Textura(totalTextura);
         textRenderer = new TextRenderer(new Font("Comic Sans MS Negrito", Font.BOLD,32));
+        drawable.getAnimator().setUpdateFPSFrames(3, null);
+        vidas = vidasIniciais;
+        pontos = 0;
+        pausarJogo = false;
+        
     }
 
     @Override
@@ -75,31 +97,35 @@ public class Pong implements GLEventListener{
         gl.glLoadIdentity();
         
         if(vidas > 0) {
-            configurarIluminacao();
-            ligarLuz();
-            desenharFundo();
-            desenhaBola();
-            desenhaCama();
-            desenharVidas();
-            String mensagem = "PONTOS: " + pontos;
-            desenhaTexto(50, 700, Color.white, mensagem);
-            if(pontos >= 200) {
-                framesSegundaFase++;
-                segundaFase();
-            }
+            renderizarJogo();
+            if(pausarJogo) {
+                String mensagem = "JOGO PAUSADO!";
+                int yPosMsg = (int) (screenHeight/2);
+                int xPosMsg = (int) (screenWidth/2.5);
+                desenhaTexto(xPosMsg,yPosMsg , Color.white, mensagem);
+            } 
+            
         } else {
-            Renderer.animator.stop();
-            System.exit(0);
+            String mensagem = "JOGO PERDIDO!";
+            int yPosMsg = (int) (screenHeight/2);
+            int xPosMsg = (int) (screenWidth/2.5);
+            desenhaTexto(xPosMsg,yPosMsg , Color.white, mensagem);
+            mensagem = "CLIQUE ENTER PARA JOGAR NOVAMENTE.";
+            yPosMsg = (int) (screenHeight/2.5);
+            xPosMsg = (int) (screenWidth/4);
+            desenhaTexto(xPosMsg,yPosMsg , Color.white, mensagem);
         }
-        
+//        segundaFase();
+//        System.out.println(drawable.getAnimator().getLastFPS());
     }
-
     @Override
     public void reshape(GLAutoDrawable drawable, int x, int y, int width, int height) {
         if(height == 0) height = 1;
         screenWidth = width;
         screenHeight = height;
         aspect = (float) width / height;
+        posXBolaInit = posXBolaInit *aspect;
+        posicaoXBola = posXBolaInit;
         
         definirLimiteSRU();
         
@@ -130,16 +156,29 @@ public class Pong implements GLEventListener{
         }
     }
     
+    private void renderizarJogo() {
+            configurarIluminacao();
+            ligarLuz();
+            desenharFundo();
+            if(!pausarJogo) desenhaBola();
+            desenhaCama();
+            desenharVidas();
+            String mensagem = "PONTOS: " + pontos;
+            int yPosMsg = (int) (screenHeight - (screenHeight*0.1));
+            desenhaTexto(50,yPosMsg , Color.white, mensagem);
+            if(pontos >= 200) {
+                framesSegundaFase++;
+                segundaFase();
+            }
+    }
+    
     private void desenharFundo() {
-        //não é geração de textura automática
         textura.setAutomatica(false);
         
-        //configura os filtros
         textura.setFiltro(filtro);
         textura.setModo(modo);
         textura.setWrap(wrap);  
                 
-        //cria a textura indicando o local da imagem e o índice
         textura.gerarTextura(gl, background, 0);
         
         gl.glPushMatrix();
@@ -156,10 +195,10 @@ public class Pong implements GLEventListener{
     
     private void desenhaCama(){
         gl.glPushMatrix();
-        desenhaQuadrilatero(Color.red, posXMinCama, posXMinCama + (larguraDaCama*0.11f), posYMaxCama + 10, posYMinCama, true);
-        desenhaQuadrilatero(Color.red, posXMaxCama - (larguraDaCama*0.11f), posXMaxCama, posYMaxCama, posYMinCama, true);
-        desenhaQuadrilatero(Color.red, posXMinCama, posXMaxCama, posYMaxCama - diferencaAlturaCama, posYMinCama, true);
-        desenhaQuadrilatero(Color.white, posXMinCama, posXMaxCama, posYMaxCama, posYMinCama + diferencaAlturaCama , true);
+        desenhaQuadrilatero(Color.red, posXMinCama, posXMinCama + (larguraDaCama*0.11f), posYMaxCama + 10, posYMinCama, DISTANCIA_Z_FUNDO, true);
+        desenhaQuadrilatero(Color.red, posXMaxCama - (larguraDaCama*0.11f), posXMaxCama, posYMaxCama, posYMinCama, DISTANCIA_Z_FUNDO, true);
+        desenhaQuadrilatero(Color.red, posXMinCama, posXMaxCama, posYMaxCama - diferencaAlturaCama, posYMinCama, DISTANCIA_Z_FUNDO ,true);
+        desenhaQuadrilatero(Color.white, posXMinCama, posXMaxCama, posYMaxCama, posYMinCama + diferencaAlturaCama, DISTANCIA_Z_FUNDO ,true);
         gl.glPopMatrix();
     }
     
@@ -172,25 +211,26 @@ public class Pong implements GLEventListener{
         desenhaBordaBola();
     }
     
-    private void desenhaQuadrilatero(Color color, float x1, float x2, float y1, float y2, boolean borda) {
+    private void desenhaQuadrilatero(Color color, float x1, float x2, float y1, float y2, float z, boolean borda) {
         gl.glBegin(GL2.GL_QUADS);
-        gl.glColor3f(convertColor(color.getRed()), convertColor(color.getGreen()), convertColor(color.getBlue()));
-        gl.glVertex3f(x1, y1, DISTANCIA_Z_FUNDO);
-        gl.glVertex3f(x2, y1, DISTANCIA_Z_FUNDO);
-        gl.glVertex3f(x2, y2, DISTANCIA_Z_FUNDO);
-        gl.glVertex3f(x1, y2, DISTANCIA_Z_FUNDO);
+        if(color != null) gl.glColor3f(convertColor(color.getRed()), convertColor(color.getGreen()), convertColor(color.getBlue()));
+        else gl.glColor4f(1f, 1f, 0f, 1f);
+        gl.glTexCoord2f(0, 0); gl.glVertex3f(x1, y1, z);
+        gl.glTexCoord2f(1, 0); gl.glVertex3f(x2, y1, z);
+        gl.glTexCoord2f(1, 1); gl.glVertex3f(x2, y2, z);
+        gl.glTexCoord2f(0, 1); gl.glVertex3f(x1, y2, z);
         gl.glEnd();
-        if(borda) desenhaBordaQuadrilatero(x1, x2, y1, y2);
+        if(borda) desenhaBordaQuadrilatero(x1, x2, y1, y2, z, 2);
     }
     
-    private void desenhaBordaQuadrilatero(float x1, float x2, float y1, float y2) {
-        gl.glLineWidth(2); // Define a largura da linha da borda
+    private void desenhaBordaQuadrilatero(float x1, float x2, float y1, float y2, float z, int lineWidth) {
+        gl.glLineWidth(lineWidth); // Define a largura da linha da borda
         gl.glBegin(GL2.GL_LINE_LOOP);
         gl.glColor3f(0f, 0f, 0f);
-        gl.glVertex3f(x1, y1, DISTANCIA_Z_FUNDO);
-        gl.glVertex3f(x2, y1, DISTANCIA_Z_FUNDO);
-        gl.glVertex3f(x2, y2, DISTANCIA_Z_FUNDO);
-        gl.glVertex3f(x1, y2, DISTANCIA_Z_FUNDO);
+        gl.glVertex3f(x1, y1, z);
+        gl.glVertex3f(x2, y1, z);
+        gl.glVertex3f(x2, y2, z);
+        gl.glVertex3f(x1, y2, z);
         gl.glEnd();
     }
     
@@ -255,30 +295,34 @@ public class Pong implements GLEventListener{
         }
     }
     
-    private void desenharVidas() { 
+    private void desenharVidas() {
+        float larguraVida = 10;
+        float distanciaVida = 10;
         int i = 0;
-        float xVida = 85;
-        float yVida = 85;
-        while (i < vidas) {
-            
+        textura.setModo(GL2.GL_BLEND);
+        textura.gerarTextura(gl, texturaVida, 1);
+        
+        while(i < vidas) {
             gl.glPushMatrix();
-            gl.glTranslatef(xVida*aspect, yVida, DISTANCIA_Z_FUNDO);
-            gl.glColor3f(1.0f, 0.0f, 0.0f);
-            glut.glutSolidTeapot(6);
+            
+            desenhaQuadrilatero(null, xMax - larguraVida -  distanciaVida, xMax -  distanciaVida, 80, 90, DISTANCIA_Z_FUNDO, false);
             gl.glPopMatrix();
             i++;
-            xVida -= 12;
+            distanciaVida+=15;
         }
+        textura.setModo(GL2.GL_DECAL);
         
-        
+        textura.desabilitarTextura(gl, 0);
     }
     
-    private void resetarMovimento() {
+    public void resetarMovimento() {
         posicaoXBola = posXBolaInit;
         posicaoYBola = posYBolaInit;
         velocidadeXDaBola = velocidadeInicial;
         velocidadeYDaBola = velocidadeInicial;
     }
+    
+    
     public void configurarIluminacao(){
         float[] ambientLight = { 0.7f, 0.7f, 0.7f, 1f };  
         gl.glLightfv(GL2.GL_LIGHT0, GL2.GL_AMBIENT, ambientLight, 0);  
@@ -286,7 +330,7 @@ public class Pong implements GLEventListener{
         float difuseLight[] = {0.8f, 0.8f, 0.8f, 1.0f};
         gl.glLightfv(GL2.GL_LIGHT0, GL2.GL_DIFFUSE, difuseLight, 0);
         
-        float lightPosition[] = {-50.0f, 0.0f, 100.0f, 1.0f};
+        float lightPosition[] = {100.0f, 80.0f, DISTANCIA_Z_FUNDO, 1.0f};
         gl.glLightfv(GL2.GL_LIGHT0, GL2.GL_POSITION, lightPosition, 0);
     }
     
@@ -312,13 +356,15 @@ public class Pong implements GLEventListener{
     }
     
     public void segundaFase(){        
-        if(framesSegundaFase == 1) {
-            alterarVelocidade();
-            background = "imagens/backgroundNoite2.jpg";
-        }
+//        if(framesSegundaFase == 1) {
+//            alterarVelocidade();
+//        }
+        textura.gerarTextura(gl, texturaCraft, 2);
+        desenharCraftTable();
+        colisaoComCraftTable();
+        textura.desabilitarTextura(gl, 2);
+        
     }
-    
-    
     private float convertColor(int color) {
         return (float) color/255;
     }
@@ -332,7 +378,7 @@ public class Pong implements GLEventListener{
     private void desenhaBordaBola() {
         int numSegments = 100;
         float theta = (float) (2.0 * Math.PI / numSegments);
-        
+        gl.glPushMatrix();
         gl.glColor3f(0.0f, 0.0f, 0.0f);
         gl.glLineWidth(3);
         gl.glBegin(GL2.GL_LINE_LOOP);
@@ -342,5 +388,95 @@ public class Pong implements GLEventListener{
             gl.glVertex3f(x, y, DISTANCIA_Z_FUNDO);
         }
         gl.glEnd();
+        gl.glPopMatrix();
+    }
+    
+    private void desenharCraftTable() {
+               
+//        gl.glTranslatef(0f, 0f, DISTANCIA_Z_FUNDO);
+//        gl.glRotatef(angulo, 1f, 1f, 0f);
+        gl.glBegin(GL2.GL_QUADS);
+
+        // Face frontal
+        gl.glColor3f(1f, 1f, 1.0f);
+        gl.glTexCoord2f(0, 0); gl.glVertex3f(posicaoXMinCraftTable, posicaoYMinCraftTable, larguraCraftTable/2);
+        gl.glTexCoord2f(1, 0); gl.glVertex3f(posicaoXMaxCraftTable, posicaoYMinCraftTable, larguraCraftTable/2);
+        gl.glTexCoord2f(1, 1); gl.glVertex3f(posicaoXMaxCraftTable, posicaoYMaxCraftTable, larguraCraftTable/2);
+        gl.glTexCoord2f(0, 1); gl.glVertex3f(posicaoXMinCraftTable, posicaoYMaxCraftTable, larguraCraftTable/2);
+
+//        // Face traseira
+//        gl.glColor3f(1f, 1f, 1f);
+//        gl.glTexCoord2f(0, 0); gl.glVertex3f(posicaoXMinCraftTable, posicaoYMinCraftTable, -larguraCraftTable/2);
+//        gl.glTexCoord2f(1, 0); gl.glVertex3f(posicaoXMaxCraftTable, posicaoYMinCraftTable, -larguraCraftTable/2);
+//        gl.glTexCoord2f(1, 1); gl.glVertex3f(posicaoXMaxCraftTable, posicaoYMaxCraftTable, -larguraCraftTable/2);
+//        gl.glTexCoord2f(0, 1); gl.glVertex3f(posicaoXMinCraftTable, posicaoYMaxCraftTable, -larguraCraftTable/2);
+//
+//        // Face superior
+//        gl.glColor3f(1f, 1f, 1f);
+//        gl.glTexCoord2f(0, 0); gl.glVertex3f(posicaoXMinCraftTable, posicaoYMaxCraftTable, larguraCraftTable/2);
+//        gl.glTexCoord2f(1, 0); gl.glVertex3f(posicaoXMaxCraftTable, posicaoYMaxCraftTable, larguraCraftTable/2);
+//        gl.glTexCoord2f(1, 1);gl.glVertex3f(posicaoXMaxCraftTable, posicaoYMaxCraftTable, -larguraCraftTable/2);
+//        gl.glTexCoord2f(0, 1);gl.glVertex3f(posicaoXMinCraftTable, posicaoYMaxCraftTable, -larguraCraftTable/2);
+//
+//        // Face inferior
+//        gl.glColor3f(1f, 1f, 1f);
+//        gl.glTexCoord2f(0, 0); gl.glVertex3f(posicaoXMinCraftTable, posicaoYMinCraftTable, larguraCraftTable/2);
+//        gl.glTexCoord2f(1, 0); gl.glVertex3f(posicaoXMaxCraftTable, posicaoYMinCraftTable, larguraCraftTable/2);
+//        gl.glTexCoord2f(1, 1); gl.glVertex3f(posicaoXMaxCraftTable, posicaoYMinCraftTable, -larguraCraftTable/2);
+//        gl.glTexCoord2f(0, 1); gl.glVertex3f(posicaoXMinCraftTable, posicaoYMinCraftTable, -larguraCraftTable/2);
+//
+//        // Face lateral direita
+//        gl.glColor3f(1f, 1f, 1f);
+//        gl.glTexCoord2f(0, 0); gl.glVertex3f(posicaoXMaxCraftTable, posicaoYMinCraftTable, larguraCraftTable/2);
+//        gl.glTexCoord2f(1, 0); gl.glVertex3f(posicaoXMaxCraftTable, posicaoYMaxCraftTable, larguraCraftTable/2);
+//        gl.glTexCoord2f(1, 1); gl.glVertex3f(posicaoXMaxCraftTable, posicaoYMaxCraftTable, -larguraCraftTable/2);
+//        gl.glTexCoord2f(0, 1); gl.glVertex3f(posicaoXMaxCraftTable, posicaoYMinCraftTable, -larguraCraftTable/2);
+//
+//        // Face lateral esquerda
+//        gl.glColor3f(1f, 1f, 1f);
+//        gl.glTexCoord2f(0, 0); gl.glVertex3f(posicaoXMinCraftTable, posicaoYMinCraftTable, larguraCraftTable/2);
+//        gl.glTexCoord2f(1, 0); gl.glVertex3f(posicaoXMinCraftTable, posicaoYMaxCraftTable, larguraCraftTable/2);
+//        gl.glTexCoord2f(1, 1); gl.glVertex3f(posicaoXMinCraftTable, posicaoYMaxCraftTable, -larguraCraftTable/2);
+//        gl.glTexCoord2f(0, 1); gl.glVertex3f(posicaoXMinCraftTable, posicaoYMinCraftTable, -larguraCraftTable/2);
+
+        gl.glEnd();
+        desenhaBordaQuadrilatero(posicaoXMinCraftTable, posicaoXMaxCraftTable, posicaoYMinCraftTable, posicaoYMaxCraftTable, larguraCraftTable/2, 5);
+
+    }
+    
+    private void colisaoComCraftTable() {
+        if(posicaoYBola + (raio/3) >= posicaoYMinCraftTable && posicaoYBola - (raio/3) <= posicaoYMaxCraftTable) {
+            if(posicaoXBola + raio >= posicaoXMinCraftTable && posicaoXBola + raio <= posicaoXMinCraftTable + velocidadeInicial) {
+                velocidadeXDaBola = -velocidadeXDaBola;
+            } else if (posicaoXBola - raio <= posicaoXMaxCraftTable && posicaoXBola - raio >= posicaoXMaxCraftTable - velocidadeInicial) {
+                velocidadeXDaBola = -velocidadeXDaBola;
+            }
+        } else if(posicaoXBola + (raio/3) >= posicaoXMinCraftTable && posicaoXBola - (raio/3) <= posicaoXMaxCraftTable) {
+            if(posicaoYBola - raio <= posicaoYMaxCraftTable && posicaoYBola - raio >= posicaoYMaxCraftTable - velocidadeInicial) {
+                velocidadeYDaBola = -velocidadeYDaBola;
+            } else if(posicaoYBola + raio >= posicaoYMinCraftTable && posicaoYBola + raio <= posicaoYMinCraftTable + velocidadeInicial) {
+                velocidadeYDaBola = -velocidadeYDaBola;
+            }
+        } else if(posicaoYBola - (raio/2) <= posicaoYMaxCraftTable && posicaoYBola - (raio/2) >= posicaoYMaxCraftTable - velocidadeInicial) {
+            if(posicaoXBola + raio >= posicaoXMinCraftTable && posicaoXBola + raio <= posicaoXMinCraftTable + velocidadeInicial) {
+                velocidadeYDaBola = -velocidadeYDaBola;
+                velocidadeXDaBola = -velocidadeXDaBola;
+            }
+        }
+    }
+    
+    public void resetarVidas() {
+        vidas = vidasIniciais;
+    }
+    
+    public void zerarPontos() {
+        pontos = 0;
+    }
+    
+    public void pausarJogo() {
+        pausarJogo = true;
+    }
+    public void despausarJogo() {
+        pausarJogo = false;
     }
 }
