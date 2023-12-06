@@ -511,7 +511,7 @@ public class Pong implements GLEventListener{
     }
     
     public void resetarVelocidade() {
-        velocidadeInicial = 1.0f;
+        velocidadeInicial = 2.0f;
     }
     
     public void resetarCama() {
